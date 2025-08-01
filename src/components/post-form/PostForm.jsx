@@ -11,8 +11,8 @@ export default function PostForm({ post }) {
         defaultValues: {
             title: post?.Title || "",
             slug: post?.$id || "",
-            content: post?.Content || "",
-            status: post?.Status || "active",
+            content: post?.content || "",
+            status: post?.status || "active",
         },
     });
 
