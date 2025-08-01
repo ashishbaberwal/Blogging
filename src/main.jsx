@@ -9,6 +9,8 @@ import Home from './pages/Home.jsx'
 import { AuthLayout, Login } from './components/index.js'
 
 
+
+
 import AddPost from "./pages/AddPost";
 import Signup from './pages/SignUp'
 import EditPost from "./pages/EditPost";
@@ -78,9 +80,11 @@ const router = createBrowserRouter([
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+  
+    <React.StrictMode>
     <Provider store={store}>
     <RouterProvider router={router}/>
     </Provider>
-  </React.StrictMode>,
+    </React.StrictMode>
+    
 )

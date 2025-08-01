@@ -128,6 +128,8 @@ export class Service{
         return this.storage.getFilePreview(
             conf.appwriteBucketId,
             fileId,
+            248,
+            248
         )
     }
 }

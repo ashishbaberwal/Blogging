@@ -9,10 +9,10 @@ import { useSelector } from "react-redux";
 export default function PostForm({ post }) {
     const { register, handleSubmit, watch, setValue, control, getValues } = useForm({
         defaultValues: {
-            title: post?.title || "",
+            title: post?.Title || "",
             slug: post?.$id || "",
-            content: post?.content || "",
-            status: post?.status || "active",
+            content: post?.Content || "",
+            status: post?.Status || "active",
         },
     });
 
@@ -64,7 +64,7 @@ export default function PostForm({ post }) {
     React.useEffect(() => {
         const subscription = watch((value, { name }) => {
             if (name === "title") {
-                setValue("slug", slugTransform(value.Title), { shouldValidate: true });
+                setValue("slug", slugTransform(value.title), { shouldValidate: true });
             }
         });
 
@@ -78,7 +78,7 @@ export default function PostForm({ post }) {
                     label="Title :"
                     placeholder="Title"
                     className="mb-4"
-                    {...register("Title", { required: true })}
+                    {...register("title", { required: true })}
                 />
                 <Input
                     label="Slug :"
@@ -104,7 +104,7 @@ export default function PostForm({ post }) {
                     <div className="w-full mb-4">
                         <img
                             src={appwriteService.getFilePreview(post.FeaturedImage)}
-                            alt={post.Title}
+                            alt={post.title}
                             className="rounded-lg"
                         />
                     </div>
