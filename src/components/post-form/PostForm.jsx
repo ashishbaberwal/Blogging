@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Input, RTE, Select } from "../index";
 import appwriteService from "../../appwrite/config";
@@ -11,42 +11,81 @@ export default function PostForm({ post }) {
         defaultValues: {
             title: post?.Title || "",
             slug: post?.$id || "",
-            content: post?.content || "",
-            status: post?.status || "active",
+            content: post?.Content || "",
+            status: post?.Status || "active",
         },
     });
 
     const navigate = useNavigate();
     const userData = useSelector((state) => state.auth.userData);
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     const submit = async (data) => {
-        if (post) {
-            const file = data.image[0] ? await appwriteService.createFile(data.image[0]) : null;
+        setError("");
+        setSubmitting(true);
 
-            if (file) {
-                appwriteService.deleteFile(post.featuredImage);
-            }
+        try {
+            if (post) {
+                const file = data.image?.[0] ? await appwriteService.uploadFile(data.image[0]) : null;
 
-            const dbPost = await appwriteService.updatePost(post.$id, {
-                ...data,
-                featuredImage: file ? file.$id : undefined,
-            });
+                if (file && post.FeaturedImage) {
+                    await appwriteService.deleteFile(post.FeaturedImage);
+                }
 
-            if (dbPost) {
-                navigate(`/post/${dbPost.$id}`);
-            }
-        } else {
-            const file = await appwriteService.uploadFile(data.image[0]);
-
-            if (file) {
-                const fileId = file.$id;
-                data.featuredImage = fileId;
-                const dbPost = await appwriteService.createPost({ ...data, userId: userData.$id });
+                const dbPost = await appwriteService.updatePost(post.$id, {
+                    title: data.title,
+                    content: data.content,
+                    status: data.status,
+                    featuredImage: file ? file.$id : post.FeaturedImage,
+                });
 
                 if (dbPost) {
                     navigate(`/post/${dbPost.$id}`);
+                    return;
                 }
+
+                setError("Post update failed. Check Appwrite permissions and try again.");
+            } else {
+                if (!userData?.$id) {
+                    setError("You need to be logged in to create a post.");
+                    return;
+                }
+
+                const file = await appwriteService.uploadFile(data.image?.[0]);
+
+                if (!file) {
+                    setError("Image upload failed. Check your Appwrite bucket settings.");
+                    return;
+                }
+
+                const createPayload = {
+                    title: data.title,
+                    slug: data.slug,
+                    content: data.content,
+                    status: data.status,
+                    featuredImage: file.$id,
+                    userId: userData.$id,
+                };
+
+                let dbPost = await appwriteService.createPost(createPayload);
+
+                if (!dbPost) {
+                    dbPost = await appwriteService.createPost({
+                        ...createPayload,
+                        slug: `${data.slug}-${Date.now()}`,
+                    });
+                }
+
+                if (dbPost) {
+                    navigate(`/post/${dbPost.$id}`);
+                    return;
+                }
+
+                setError("Post creation failed. The slug may already exist or your Appwrite permissions may be blocking writes.");
             }
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -61,7 +100,7 @@ export default function PostForm({ post }) {
         return "";
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const subscription = watch((value, { name }) => {
             if (name === "title") {
                 setValue("slug", slugTransform(value.title), { shouldValidate: true });
@@ -113,11 +152,17 @@ export default function PostForm({ post }) {
                     options={["active", "inactive"]}
                     label="Status"
                     className="mb-4"
-                    {...register("Status", { required: true })}
+                    {...register("status", { required: true })}
                 />
-                <Button type="submit" bgColor={post ? "bg-green-500" : undefined} className="w-full">
-                    {post ? "Update" : "Submit"}
+                <Button
+                    type="submit"
+                    bgColor={post ? "bg-green-500" : undefined}
+                    className="w-full disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={submitting}
+                >
+                    {submitting ? "Saving..." : post ? "Update" : "Submit"}
                 </Button>
+                {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
             </div>
         </form>
     );
