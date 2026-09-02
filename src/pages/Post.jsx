@@ -7,6 +7,8 @@ import { useSelector } from "react-redux";
 
 export default function Post() {
     const [post, setPost] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState("");
     const { slug } = useParams();
     const navigate = useNavigate();
 
@@ -24,12 +26,20 @@ export default function Post() {
     }, [slug, navigate]);
 
     const deletePost = () => {
+        if (!window.confirm("Delete this post permanently? This action cannot be undone.")) {
+            return;
+        }
+        setDeleting(true);
+        setDeleteError("");
         appwriteService.deletePost(post.$id).then((Status) => {
             if (Status) {
                 if (post.FeaturedImage) {
                     appwriteService.deleteFile(post.FeaturedImage);
                 }
                 navigate("/");
+            } else {
+                setDeleting(false);
+                setDeleteError("Could not delete the post. Please try again.");
             }
         });
     };
@@ -55,9 +65,10 @@ export default function Post() {
                                     Edit
                                 </Button>
                             </Link>
-                            <Button bgColor="bg-red-500" onClick={deletePost}>
-                                Delete
+                            <Button bgColor="bg-red-500" onClick={deletePost} disabled={deleting}>
+                                {deleting ? "Deleting..." : "Delete"}
                             </Button>
+                            {deleteError && <p className="mt-2 text-sm text-red-600">{deleteError}</p>}
                         </div>
                     )}
                 </div>

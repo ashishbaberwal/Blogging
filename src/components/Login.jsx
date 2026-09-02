@@ -6,10 +6,12 @@ import {useDispatch} from "react-redux"
 import authService from "../appwrite/auth"
 import {useForm} from "react-hook-form"
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function Login() {
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    const {register, handleSubmit} = useForm()
+    const {register, handleSubmit, formState: {errors}} = useForm()
     const [error, setError] = useState("")
 
     const login = async(data) => {
@@ -47,28 +49,36 @@ function Login() {
                     </Link>
         </p>
         {error && <p className="text-red-600 mt-8 text-center">{error}</p>}
-        <form onSubmit={handleSubmit(login)} className='mt-8'>
+        <form onSubmit={handleSubmit(login)} className='mt-8' noValidate>
             <div className='space-y-5'>
+                <div>
                 <Input
                 label="Email: "
                 placeholder="Enter your email"
                 type="email"
+                aria-invalid={errors.email ? "true" : undefined}
                 {...register("email", {
-                    required: true,
-                    validate: {
-                        matchPatern: (value) => /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(value) ||
-                        "Email address must be a valid address",
-                    }
+                    required: "Email is required",
+                    pattern: {
+                        value: EMAIL_PATTERN,
+                        message: "Enter a valid email address",
+                    },
                 })}
                 />
+                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+                </div>
+                <div>
                 <Input
                 label="Password: "
                 type="password"
                 placeholder="Enter your password"
+                aria-invalid={errors.password ? "true" : undefined}
                 {...register("password", {
-                    required: true,
+                    required: "Password is required",
                 })}
                 />
+                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
+                </div>
                 <Button
                 type="submit"
                 className="w-full"
