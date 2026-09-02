@@ -101,7 +101,7 @@ export default function signnup() {
                             required: true,})} />
             </div>
           </div>
-          <Button type="button" className="w-full">
+          <Button type="submit" className="w-full">
             Sign up
           </Button>
         </form>
